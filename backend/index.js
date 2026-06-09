@@ -9,7 +9,7 @@ import { Server } from 'socket.io'
 const app=express()
 const server=http.createServer(app)
 export const io=new Server(server,{
-    cors:{origin:'*'}
+    cors:{origin: process.env.FRONTEND_URL || '*'}
 })
 export const userSocketmap={}
 io.on("connection",(socket)=>{
@@ -26,11 +26,15 @@ io.on("connection",(socket)=>{
     })
 })
 app.use(express.json({limit:"4mb"}))
-app.use(cors())
+app.use(cors({
+    origin: process.env.FRONTEND_URL || '*',
+    credentials: true
+}))
 
 app.use("/api/status",(req,res)=>res.send("Server is Live"));
 app.use("/api/auth",userRouter)
 app.use('/api/messages',messageRouter)
-await connectDB()
 const PORT=process.env.PORT||5000;
-server.listen(PORT,()=>console.log(`Server is running at ${PORT}`))
+connectDB().then(()=>{
+    server.listen(PORT,()=>console.log(`Server is running at ${PORT}`))
+})
